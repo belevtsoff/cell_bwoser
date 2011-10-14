@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{# lists possible visualization options for a cell #}
+{% block title %}{{ cellid }}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #000000; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>Visualization - {{ cellid }}</h1>
+    <p class="important">
+        <ul>
+        {% for method in methods %}
+            <li><a href="plot?method={{ method }}&cellid={{ cellid }}">{{ method|capitalize }}</a>
+        {% endfor %}
+        </ul> 
+    </p>
+{% endblock %}
+
+{% block footer %}
+    <a href="index">Back to list</a><br><br>
+    {{ super() }}
+{% endblock %}

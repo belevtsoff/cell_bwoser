@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{# visualizes selected cell characteristic #}
+{% block title %}{{ method }} - {{cellid}}{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #000000; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>{{ method|capitalize }} - {{ cellid }}</h1>
+    <b><span style="color:red">{{ message|default("") }}<span></b>
+    <p class="important">
+    
+    <form name="update" action="plot?method={{ method }}&cellid={{ cellid }}" method="post">
+        <input type="submit" name='nocache' value="Update plot" />
+    </form>
+    <img src="{{ img_data }}" />
+        
+    <hr>
+        <b> {{ message|default("") }} </b>
+        <form name="eval" action="plot?method={{ method }}&cellid={{ cellid }}" method="post">
+            <p>
+               Reviewer:<input type="text" name="reviewer" value="" size="15" maxlength="40"/>
+            </p>
+            <input type="checkbox" name="clean">Clean</input>
+            <p>Comment</p>
+            <textarea name="comment"></textarea>
+            <p><input type="button" value="Save" onclick=
+                "if(eval.reviewer.value.length==0)
+                    alert('Enter your name!');
+                else eval.submit();"/></p>
+        </form>
+    </p>
+{% endblock %}
+
+{% block footer %}
+    <a href="index">Back to list</a><br><br>
+    {{ super() }}
+{% endblock %}

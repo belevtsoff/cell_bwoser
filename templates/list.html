@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{# builds a list of available cells given the data rec-array #}
+{% block title %}Index{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #000000; }
+    </style>
+{% endblock %}
+
+{% block content %}
+{% set fields = data.dtype.names %}
+    <h1>Sorted cells</h1>
+    <p class="important">
+        <table border = {{ border|default(1) }}>
+            <tr>{% for field in fields %}<th>{{ field|capitalize }}</th>{% endfor %}</tr>
+        {% for rowid in range(data['id']|count) %}
+            {% set cellid = data['id'][rowid] %}
+            <tr>
+                <td><a href="cell?cellid={{ cellid }}">{{ cellid }}</a></td>
+            {% for field in fields %}
+            {% if field != 'id' %}
+                <td>{{ data[field][rowid] }}</td>
+            {% endif %}
+            {% endfor %}
+            </tr>
+        {% endfor %}
+        </table>      
+    </p>
+{% endblock %}
