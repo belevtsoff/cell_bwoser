@@ -20,6 +20,12 @@ class Visualize:
         
     def dashboard(self, cell):
         dashboard.show_cell(self.io_filter, cell)
+
+    def spike_patterns(self, cell):
+
+
+
+
         
 def html_fig(fig=None):
     if not fig:

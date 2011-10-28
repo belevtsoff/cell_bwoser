@@ -10,12 +10,15 @@ import os
 
 DATAPATH = os.environ['DATAPATH']
 
+import json
+import numpy as np
+
 class HelloMpl:
-    def __init__(self):
-        self.env = Environment(loader=FileSystemLoader('templates'))
-        self.h5filter = HDF5filter('cell_db.h5')
+    def __init__(self, env, data_filter):
+
+        self.env = env
         
-        data_filter = BakerlabFilter(DATAPATH+'gollum_export.inf')
+        self.h5filter = HDF5filter('cell_db.h5')
         self.vis = Visualize(data_filter)
         
         self.data = mlab.csv2rec(DATAPATH+'cell_db.csv')
@@ -30,7 +33,22 @@ class HelloMpl:
             self.h5filter.add_cached_string(cellid, item, img_data)
             
         return img_data
-            
+    
+    @cherrypy.expose
+    def cache_data(self, cellid, name, data):
+        data = map(float, data.split(","))
+        self.h5filter.add_cached_string(str(cellid), str(name), data)
+        return 
+
+    @cherrypy.expose
+    def get_cached(self, cellid, name):
+        print cellid
+        data = self.h5filter.get_cached_string(cellid, name)
+        if not data:
+            json_data = {name:None}
+        else:
+            json_data = {name:data}
+        return json.dumps(json_data)
     
     @cherrypy.expose
     def index(self):
@@ -40,8 +58,10 @@ class HelloMpl:
     def cell(self, cellid):
         visualize = ['dashboard','waveshapes']
         methods = list(set(visualize) & set(dir(self.vis)))
-        
-        return self.env.get_template('cell.html').render(cellid=cellid, methods=methods)
+        analyses = ["event_selector"] 
+        return self.env.get_template('cell.html').render(cellid=cellid,
+                                              methods=methods,
+                                              analyse_methods=analyses)
     
     @cherrypy.expose
     def plot(self, method, cellid, nocache=None, clean=None, comment=None, reviewer=None):
@@ -56,4 +76,13 @@ class HelloMpl:
                                                          img_data = img_data,
                                                          message = message)
         
-cherrypy.quickstart(HelloMpl())
+from user_interface import UserInterface
+data_filter = BakerlabFilter(DATAPATH+'gollum_export.inf')
+
+conf = {'/js': {'tools.staticdir.on': True,
+        'tools.staticdir.dir': '/Users/bartosz/SVN/personal/Analysis/cell_bwoser/src/js'}}
+
+env = Environment(loader=FileSystemLoader('templates'))
+root = HelloMpl(env, data_filter)
+root.analyse = UserInterface(env, data_filter)
+cherrypy.quickstart(root, '/', config=conf)

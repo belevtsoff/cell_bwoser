@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<!--<meta http-equiv="cache-control" content="no-cache" />
+	<meta http-equiv="pragma" content="no-cache" />
+	<meta http-equiv="expires" content="0" />-->
+	<title>Event selector</title>
+    <script type="text/javascript" src="../js/d3/d3.js"></script>
+    <script type="text/javascript" src="../js/d3/lib/jquery/jquery.js"></script>
+<style type="text/css">
+		path {
+		    stroke: steelblue;
+		    stroke-width: 2;
+		    fill: none;
+		}
+
+		line {
+		    stroke: black;
+		}
+
+		text {
+		    font-family: Arial;
+		    font-size: 9pt;
+		}
+	</style>
+    
+	</head>
+  <body>
+		<script type="text/javascript">
+		    
+            function dx(d) { return d.x;}
+            function dy(d) {return d.y;}
+            var data = {{ data }}
+            var user_data = []
+            var cellid = "{{ cellid }}"
+            data_request = {"cellid": cellid, "name": "events"}
+            $.get("/get_cached", data_request, function(d)
+                    {if (d.events==null) user_data = []
+                    else user_data = d.events;
+                    update_events()}, "json")
+            
+			w = 400,
+			h = 200,
+            margin = 20,
+            y = d3.scale.linear().domain([d3.min(data, dy),
+                    d3.max(data, dy)]).range([margin, h - margin]),
+            x = d3.scale.linear().domain([d3.min(data, dx),
+                    d3.max(data, dx)]).range([margin, w - margin])
+
+			var vis = d3.select("body")
+			    .append("svg:svg")
+			    .attr("width", w)
+			    .attr("height", h)
+
+			var g = vis.append("svg:g")
+			    .attr("transform", "translate(0, 200)");
+                
+			
+			var line = d3.svg.line()
+			    .x(function(d, i) { return x(d.x); })
+			    .y(function(d,i) { return -1*y(d.y); })
+			
+            g.append("svg:path").attr("d", line(data));
+            var frame = vis.append("svg:rect")
+                   .attr("x", margin)
+                   .attr("y", margin)
+                   .attr("width", w-margin)
+                   .attr("height", h-margin)
+                   .style("fill", "none")
+                   .style("stroke", "#aaa")
+                   .style("stroke-width", 1.5)
+                   .attr("pointer-events", "all")
+                   .on('mousedown', mousedown);
+            
+            var events = g.append("svg:g")
+            update_events()
+
+            function update_events() {
+                var dy = h - margin;
+                var markers = events.selectAll("path").data(user_data,
+                        function(d) {return d;})
+                markers.enter().append("svg:path")
+                     .attr("d", function(d) {return "M" + x(d) +
+                             ",0L" +x(d) + ",-" + dy;})
+                     .style("fill", "none")
+                     .style("stroke", "black")
+                     .style("stroke-width", 0.8)
+
+                markers.exit().remove();
+             };
+
+             function mousedown() {
+                 d3.event.preventDefault();
+                 x0 = d3.svg.mouse(this);
+                 
+                 count = 0;
+                 y1 = h-margin;
+                 /*rect = d3.select(this.parentNode)
+                     .append("svg:path")
+                     .attr("d", "M" + x0[0] +  " " + margin +" L" +x0[0] + " " + h)
+                     .style("fill", "none")
+                     .style("stroke", "black")
+                     .style("stroke-width", 0.8);*/
+
+                 dataX = x.invert(x0[0])
+                 if (d3.event.button==0)
+                 {
+                     user_data.push(dataX);
+                 } else if (d3.event.button==2)
+                 {
+                     idx = -1;
+                     min_dist = 10000;
+                    for (var i=0; i<user_data.length; i++)
+                    {
+                        point = user_data[i]
+                        if (min_dist> Math.abs(point-dataX)) {
+                            min_dist = Math.abs(point-dataX)
+                            idx = i
+                        }
+                    }
+                    if (idx>=0) 
+                    { 
+                        user_data.splice(idx,1);
+                    }
+
+
+                 }
+                 update_events() 
+            }
+
+            function post() {
+
+                /*var form = document.getElementsByName("form")[0]
+
+                var hiddenField = document.getElementsByName("data")[0]
+                hiddenField.setAttribute("value", user_data);
+
+                form.submit();*/
+                post_data = {
+                    "cellid": cellid,
+                    "name" : "events",
+                    "data": user_data.toString() 
+                }
+                      
+                $.post("/cache_data", post_data)
+            }
+                   
+
+
+			
+        </script>
+        <form action="/cache_data" method="POST" name="form">
+        <input type="hidden" name="name" value="events">
+        <input type="hidden" name="cellid" value={{ cellid }}>
+        <input type="hidden" name="data" value="">
+     <input type="button" value="Save" onClick="post()" />
+</form>
+        
+  </body>
+</html>

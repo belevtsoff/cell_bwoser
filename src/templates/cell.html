@@ -17,6 +17,12 @@
             <li><a href="plot?method={{ method }}&cellid={{ cellid }}">{{ method|capitalize }}</a>
         {% endfor %}
         </ul> 
+    <h1>Analysis - {{ cellid }}</h1>
+        <ul>
+        {% for method in analyse_methods %}
+            <li><a href="analyse/{{ method }}?cellid={{ cellid }}">{{ method|capitalize }}</a>
+        {% endfor %}
+        </ul> 
     </p>
 {% endblock %}
 

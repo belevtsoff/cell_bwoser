@@ -24,6 +24,6 @@ class HDF5filter:
         
         self.h5file.createArray(path, name, str, createparents=True)
         self.h5file.flush()
-        
+    
     def add_spt(self, cellid, spt):
         pass
