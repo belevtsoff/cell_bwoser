@@ -19,7 +19,6 @@ class HelloMpl:
         self.env = env
         
         self.h5filter = HDF5filter('cell_db.h5')
-        self.vis = Visualize(data_filter)
         
         self.data = mlab.csv2rec(DATAPATH+'cell_db.csv')
     
@@ -28,7 +27,7 @@ class HelloMpl:
         img_data = self.h5filter.get_cached_string(cellid, item)
         
         if not img_data or nocache:
-            getattr(self.vis, method)(cellid)
+            getattr(self.visualize, method)(cellid)
             img_data = html_fig()
             self.h5filter.add_cached_string(cellid, item, img_data)
             
@@ -42,7 +41,6 @@ class HelloMpl:
 
     @cherrypy.expose
     def get_cached(self, cellid, name):
-        print cellid
         data = self.h5filter.get_cached_string(cellid, name)
         if not data:
             json_data = {name:None}
@@ -56,8 +54,8 @@ class HelloMpl:
     
     @cherrypy.expose
     def cell(self, cellid):
-        visualize = ['dashboard','waveshapes']
-        methods = list(set(visualize) & set(dir(self.vis)))
+        visualize = ['dashboard','waveshapes', 'spike_patterns']
+        methods = list(set(visualize) & set(dir(self.visualize)))
         analyses = ["event_selector"] 
         return self.env.get_template('cell.html').render(cellid=cellid,
                                               methods=methods,
@@ -83,6 +81,8 @@ conf = {'/js': {'tools.staticdir.on': True,
         'tools.staticdir.dir': '/Users/bartosz/SVN/personal/Analysis/cell_bwoser/src/js'}}
 
 env = Environment(loader=FileSystemLoader('templates'))
+
 root = HelloMpl(env, data_filter)
 root.analyse = UserInterface(env, data_filter)
+root.visualize = Visualize(data_filter, root)
 cherrypy.quickstart(root, '/', config=conf)
