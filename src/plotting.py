@@ -79,6 +79,10 @@ class Visualize:
         return bStr
     
     def spike_patterns(self, cell):
+        """Show distribution and PSTH of spike patterns.
+        
+        Requires selection of spike windows in the Event Selector.
+        """
         
         dataset, cl = self._get_patterns(cell)
         spt = dataset['spt']
@@ -104,8 +108,20 @@ class Visualize:
                            label=self._dec2binstr(i, ndigits))
         plt.legend()
 
-    def pattern_traces(self, cell, contact=1, n_traces=100,
-                       f_band=[300., 5000.], subtract_mean='True'):
+    def pattern_traces(self, cell, contact=1, n_traces=100, subtract_mean='True'):
+        """Show raw traces from microelectrodes for different spike
+        patterns.
+        
+        Requires selection of spike windows in the Event Selector.
+
+        **Extra parameters**:
+
+        * `contact` (int) -- index of tetrode contact to use (default
+          0)
+        * `n_traces` (int) -- number of traces  to plot (default 100)
+        * `subtract_mean` (True of False) -- subtract mean from traces
+        (default True)
+        """
         
         contact = int(contact)
         subtract_mean = str2bool(subtract_mean)

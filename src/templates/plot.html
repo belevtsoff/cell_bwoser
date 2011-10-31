@@ -18,6 +18,10 @@
         <input type="submit" name='nocache' value="Update plot" />
     </form>
     <img src="{{ img_data }}" />
+    <p>
+    <h3>Description</h3>
+    {{ doc }}
+    </p>
         
     <hr>
         <b> {{ message|default("") }} </b>
