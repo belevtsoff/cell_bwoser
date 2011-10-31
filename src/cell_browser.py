@@ -22,12 +22,12 @@ class HelloMpl:
         
         self.data = mlab.csv2rec(DATAPATH+'cell_db.csv')
     
-    def get_img_data(self, cellid, method, nocache=None):
+    def get_img_data(self, cellid, method, nocache=None, **opts):
         item = 'img_'+method
         img_data = self.h5filter.get_cached_string(cellid, item)
         
         if not img_data or nocache:
-            getattr(self.visualize, method)(cellid)
+            getattr(self.visualize, method)(cellid, **opts)
             img_data = html_fig()
             self.h5filter.add_cached_string(cellid, item, img_data)
             
@@ -54,7 +54,8 @@ class HelloMpl:
     
     @cherrypy.expose
     def cell(self, cellid):
-        visualize = ['dashboard','waveshapes', 'spike_patterns']
+        visualize = ['dashboard','waveshapes', 'spike_patterns',
+                     'pattern_traces']
         methods = list(set(visualize) & set(dir(self.visualize)))
         analyses = ["event_selector"] 
         return self.env.get_template('cell.html').render(cellid=cellid,
@@ -62,9 +63,10 @@ class HelloMpl:
                                               analyse_methods=analyses)
     
     @cherrypy.expose
-    def plot(self, method, cellid, nocache=None, clean=None, comment=None, reviewer=None):
+    def plot(self, method, cellid, nocache=None, clean=None,
+             comment=None, reviewer=None, **kwargs):
 
-        img_data = self.get_img_data(cellid, method, nocache)
+        img_data = self.get_img_data(cellid, method, nocache, **kwargs)
         
         if reviewer: message = "You evaluation has been saved to the DB"
         else: message = ''
@@ -72,7 +74,8 @@ class HelloMpl:
         return self.env.get_template('plot.html').render(cellid = cellid,
                                                          method = method,
                                                          img_data = img_data,
-                                                         message = message)
+                                                         message=message,
+                                                         opts=kwargs)
         
 from user_interface import UserInterface
 data_filter = BakerlabFilter(DATAPATH+'gollum_export.inf')

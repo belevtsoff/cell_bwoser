@@ -6,6 +6,13 @@ import spike_sort
 from spike_analysis import dashboard, basic 
 import numpy as np
 
+from spike_sort.core.extract import ZeroPhaseFilter
+from matplotlib.transforms import blended_transform_factory
+
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
+
+
 class Visualize:
     def __init__(self, io_filter, root):
         self.io_filter = io_filter
@@ -44,9 +51,14 @@ class Visualize:
         stim = dataset['stim']
         ev = np.sort(self.root.h5filter.get_cached_string(cell,
                                                           "events"))
+        try:
+            win = [ev[0], ev[-1]]
+        except IndexError:
+            ev = [0, 30]
+            win = ev
+        
         dataset['events'] = ev
-
-        win = [ev[0], ev[-1]]
+        
         spt = _filter_spikes(spt, stim, win)
         trains = basic.SortSpikes(spt, stim, win) 
         cl = _find_classes(trains, ev)
@@ -92,7 +104,51 @@ class Visualize:
                            label=self._dec2binstr(i, ndigits))
         plt.legend()
 
-    def spike_pattern_traces(self, cell):
+    def pattern_traces(self, cell, contact=1, n_traces=100,
+                       f_band=[300., 5000.], subtract_mean='True'):
+        
+        contact = int(contact)
+        subtract_mean = str2bool(subtract_mean)
+        
+        dataset, cl = self._get_patterns(cell)
+        spt = dataset['spt']
+        stim = dataset['stim']
+        ev = dataset['events']
+        if ev is None or len(ev)<2:
+            ev = [0, 30]
+        win = [ev[0], ev[-1]]
+        sp = self.io_filter.read_sp(cell)
+        #filter = ZeroPhaseFilter('cheby2', f_band)
+        #sp = spike_sort.extract.filter_proxy(sp, filter)
+
+        fig=plt.figure()
+        n_patterns = len(np.unique(cl))
+        ndigits = np.ceil(np.log2(cl.max()))
+        ax=None
+        stim_dict = {'data':stim}
+        sp_traces = spike_sort.extract.extract_spikes(sp,
+                                                      stim_dict,
+                                                      win,
+                                                      contacts=contact)
+        if subtract_mean:
+            sp_traces['data']=sp_traces['data']-sp_traces['data'].mean(1)[:,None,:]
+        
+        for i,c in enumerate(np.unique(cl)):
+            ax=plt.subplot(n_patterns, 1, i+1, frameon=False,
+                           sharex=ax)
+            traces = sp_traces['data'][:,cl==c,0]
+            plt.plot(sp_traces['time'], traces[:,:n_traces], 'k-')
+            plt.text(0.9, 0.8, self._dec2binstr(c, ndigits),
+                     transform=ax.transAxes)
+            plt.yticks([])
+            plt.setp(ax.xaxis.get_ticklabels(),visible=False)
+            print sp_traces['data'].shape
+        plt.xticks(ev)
+        plt.setp(ax.xaxis.get_ticklabels(),visible=True)
+        trans = blended_transform_factory(ax.transData,
+                                          fig.transFigure)
+        plt.vlines(ev, 0, 1, color='r', transform=trans, clip_on=False)
+
         pass
 
         
