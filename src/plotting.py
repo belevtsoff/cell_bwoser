@@ -92,8 +92,8 @@ class Visualize:
         
         plt.figure()
         plt.subplot(211)
-        bins = np.arange(cl.min(), cl.max()+1)
-        n, bins = np.histogram(cl, bins)
+        bins = np.arange(cl.min(), cl.max()+2)
+        n, _ = np.histogram(cl, bins)
         n = n*1./np.sum(n)
         bins = bins[:-1]
         w = 0.8
