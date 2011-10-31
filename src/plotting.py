@@ -60,6 +60,8 @@ class Visualize:
         dataset['events'] = ev
         
         spt = _filter_spikes(spt, stim, win)
+        dataset['spt'] = spt
+        
         trains = basic.SortSpikes(spt, stim, win) 
         cl = _find_classes(trains, ev)
         return dataset, cl
@@ -164,9 +166,79 @@ class Visualize:
         trans = blended_transform_factory(ax.transData,
                                           fig.transFigure)
         plt.vlines(ev, 0, 1, color='r', transform=trans, clip_on=False)
+    
+    def pattern_spike_waveforms(self, cell, contact=0, n_spikes=100):
+        """Waveforms of spikes emitted in different spike patterns
+        (shown in separate subplots) and spike windows (shown in
+        different colors).
 
-        pass
+        Requires selection of spike windows in the Event Selector.
 
+        **Extra parameters**:
+
+        * `contact` (int) -- index of tetrode contact to use (default
+        0),
+        * `n_spikes` (int) -- number of spikes to plot (default 100)
+        """
+
+        def which_window(spt, stim, ev):
+            bWin = np.vstack([spike_in_win(spt, stim, [ev[i], ev[i+1]]) 
+                           for i in range(len(ev)-1)])
+            cl = bWin.argmax(0) if len(ev)>2 else bWin[0,:]*1
+            return cl
+
+        def spike_in_win(spt, stim, win):
+            i = np.searchsorted(stim, spt)-1
+            sp_pst = spt-stim[i]
+            bool = ((sp_pst>win[0]) &( sp_pst<win[1]))
+            return bool
+        
+        contact = int(contact)
+        win = [-1, 2]
+        colors = ['r', 'b', 'g', 'y']
+
+        dataset, cl = self._get_patterns(cell)
+        spt = dataset['spt']
+        stim = dataset['stim']
+        ev = dataset['events']
+        sp = self.io_filter.read_sp(cell)
+        
+        sp_dict = spike_sort.extract.extract_spikes(sp,
+                                                      {"data": spt},
+                                                      win,
+                                                      contacts=contact)
+        sp_time = sp_dict['time']
+        sp_waves = sp_dict['data'][:,:, 0]
+        #spt = spt[:sp_waves.shape[1]]
+        stim_idx = stim.searchsorted(spt)-1
+        sp_cl = cl[stim_idx]
+        sp_window_lab = which_window(spt, stim, ev)
+        labels = np.unique(cl)
+        axes_list = []
+        i_max = np.abs(sp_time).argmin()
+        fig = plt.figure(figsize=(12,4))
+        fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15)
+        ax=None
+        min, max = sp_waves[i_max,:].min(),sp_waves[i_max,:].max()
+        x = np.linspace(min, max, 100)
+        for i,l in enumerate(labels):
+            ax=plt.subplot(1, len(labels), i+1, frameon=False, sharey=ax)
+            sp_win_waves = sp_waves[:, sp_cl==l]
+            if sp_win_waves.shape[1]>0:
+                idx = np.random.rand(sp_win_waves.shape[1]).argsort()
+                waves_sh = sp_win_waves[:,idx[:n_spikes]]
+                window_lab = sp_window_lab[:, sp_cl==l][idx[:n_spikes]]
+                for w_l in np.unique(window_lab):
+                    plt.plot(sp_time, waves_sh[:,
+                                               window_lab==w_l],colors[w_l],lw=0.1)
+                
+            plt.xlabel(self._dec2binstr(l,3))
+            plt.xticks([])
+        ax_annotate = fig.add_subplot(2,1,1, sharey=ax, frameon=False)
+        plt.xticks([])
+        plt.yticks([])
+        ylims = plt.ylim()
+        plt.axhline(0, lw=0.5, color='k')
         
 def html_fig(fig=None):
     if not fig:

@@ -12,38 +12,8 @@ DATAPATH = os.environ['DATAPATH']
 
 import json
 import numpy as np
-import sys
 
-try:
-    import markdown
-except ImportError:
-    markdown = False
-
-def trim(docstring):
-    if not docstring:
-        return ''
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
-    # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
-    for line in lines[1:]:
-        stripped = line.lstrip()
-        if stripped:
-            indent = min(indent, len(line) - len(stripped))
-    # Remove indentation (first line is special):
-    trimmed = [lines[0].strip()]
-    if indent < sys.maxint:
-        for line in lines[1:]:
-            trimmed.append(line[indent:].rstrip())
-    # Strip off trailing and leading blank lines:
-    while trimmed and not trimmed[-1]:
-        trimmed.pop()
-    while trimmed and not trimmed[0]:
-        trimmed.pop(0)
-    # Return a single string:
-    return '\n'.join(trimmed)
-
+from utils import doc2html
 
 class HelloMpl:
     def __init__(self, env, data_filter):
@@ -87,7 +57,7 @@ class HelloMpl:
     @cherrypy.expose
     def cell(self, cellid):
         visualize = ['dashboard','waveshapes', 'spike_patterns',
-                     'pattern_traces']
+                     'pattern_traces', 'pattern_spike_waveforms']
         methods = list(set(visualize) & set(dir(self.visualize)))
         analyses = ["event_selector"] 
         return self.env.get_template('cell.html').render(cellid=cellid,
@@ -99,16 +69,15 @@ class HelloMpl:
              comment=None, reviewer=None, **kwargs):
 
         img_data = self.get_img_data(cellid, method, nocache, **kwargs)
-        docstring = trim(getattr(self.visualize, method).__doc__)
-        if markdown:
-            docstring = markdown.markdown(docstring)
 
-        
+        docstring = getattr(self.visualize, method).__doc__
+        doc = doc2html(docstring)
+         
         if reviewer: message = "You evaluation has been saved to the DB"
         else: message = ''
         
         return self.env.get_template('plot.html').render(cellid=cellid,
-                                                         doc=docstring,
+                                                         doc=doc,
                                                          method=method,
                                                          img_data=img_data,
                                                          message=message,

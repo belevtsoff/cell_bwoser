@@ -7,7 +7,10 @@
 	<title>Event selector</title>
     <script type="text/javascript" src="../js/d3/d3.js"></script>
     <script type="text/javascript" src="../js/d3/lib/jquery/jquery.js"></script>
-<style type="text/css">
+    
+    
+    
+    <style type="text/css">
 		path {
 		    stroke: steelblue;
 		    stroke-width: 2;
@@ -26,7 +29,11 @@
     
 	</head>
   <body>
-		<script type="text/javascript">
+      
+    <h1> Event Selector &ndash; {{ cellid }}</h1>
+    <b><span style="color:red">{{ message|default("") }}<span></b>
+
+    <script type="text/javascript">
 		    
             function dx(d) { return d.x;}
             function dy(d) {return d.y;}
@@ -145,9 +152,6 @@
                 $.post("/cache_data", post_data)
             }
                    
-
-
-			
         </script>
         <form action="/cache_data" method="POST" name="form">
         <input type="hidden" name="name" value="events">
@@ -155,7 +159,11 @@
         <input type="hidden" name="data" value="">
      <input type="button" value="Save" onClick="post()" />
  </form>
-
+ <p>
+ <h2>Description:</h2>
+ {{ doc }}
+ </p>
+  </p>
   <a href="/cell?cellid={{ cellid }}">Back to cell</a>
         
   </body>
