@@ -63,6 +63,23 @@ class HelloMpl:
         return self.env.get_template('cell.html').render(cellid=cellid,
                                               methods=methods,
                                               analyse_methods=analyses)
+   
+    @cherrypy.expose
+    def next(self, cellid):
+        i, = np.where(self.data['id']==cellid)
+        try:
+            newid = self.data['id'][i[0]+1]
+        except IndexError:
+            return "No more cells"
+        cherrypy.lib.cptools.redirect("/cell?cellid=%s" % newid)
+
+    @cherrypy.expose
+    def prev(self, cellid):
+        i, = np.where(self.data['id']==cellid)
+        if i[0]>0:
+            newid = self.data['id'][i[0]-1]
+            cherrypy.lib.cptools.redirect("/cell?cellid=%s" % newid)
+        return "No more cells"
     
     @cherrypy.expose
     def plot(self, method, cellid, nocache=None, clean=None,
