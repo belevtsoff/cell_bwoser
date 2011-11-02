@@ -56,8 +56,12 @@ class HelloMpl:
     
     @cherrypy.expose
     def cell(self, cellid):
-        visualize = ['dashboard','waveshapes', 'spike_patterns',
-                     'pattern_traces', 'pattern_spike_waveforms']
+        visualize = ['dashboard',
+                     'waveshapes', 
+                     'timeline',
+                     'spike_patterns',
+                     'pattern_traces', 
+                     'pattern_spike_waveforms']
         methods = list(set(visualize) & set(dir(self.visualize)))
         analyses = ["event_selector"] 
         return self.env.get_template('cell.html').render(cellid=cellid,

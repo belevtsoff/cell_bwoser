@@ -33,6 +33,7 @@ class Visualize:
         spt = self.io_filter.read_spt(cell)
 
         n_spikes = len(spt['data'])
+        
         i = np.random.randint(0, n_spikes, n_traces)
         spt['data'] = spt['data'][i]
 
@@ -41,6 +42,38 @@ class Visualize:
         spike_sort.ui.plotting.plot_spikes(sp_waves)
         self.io_filter.close()
         
+    def timeline(self, cell, win='-0.6,0.8', n_traces=100, n_splits=4):
+
+        sp_win = map(float, win.split(','))
+        n_traces = int(n_traces)
+        n_splits = int(n_splits)
+        sp = self.io_filter.read_sp(cell)
+        spt = self.io_filter.read_spt(cell)
+        
+        n_spikes = len(spt['data'])
+        inc = n_spikes/n_splits
+        n_chans, _ = sp['data'].shape
+         
+        fig=plt.figure()
+        axs = [None for i in range(n_chans)]
+        for split in xrange(n_splits):
+            i = np.random.randint(inc*split, inc*(split+1), n_traces)
+            spt_split = {'data': spt['data'][i]}
+            sp_waves = spike_sort.extract.extract_spikes(sp, spt_split, sp_win)
+            print sp_waves['data'].shape
+            for chan in xrange(n_chans):
+                ax = plt.subplot(n_chans, n_splits, chan*n_splits+split+1,
+                            frameon=False, sharey=axs[chan])
+                plt.plot(sp_waves['time'], sp_waves['data'][:,:,chan],
+                         'k', alpha=0.3)
+                plt.xticks([])
+                plt.yticks([])
+                axs[chan] = ax
+        plt.text(0.5, 0.05, 'time', ha='center', transform=fig.transFigure)
+        plt.text(0.05, 0.5, 'channels', va='center',rotation=90, transform=fig.transFigure)
+
+        self.io_filter.close()
+
     def dashboard(self, cell):
         dashboard.show_cell(self.io_filter, cell)
 
