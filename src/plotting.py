@@ -43,6 +43,19 @@ class Visualize:
         self.io_filter.close()
         
     def timeline(self, cell, win='-0.6,0.8', n_traces=100, n_splits=4):
+        """Change of spike waveforms in time (from left to right).
+        Last column shows means spike wavefroms in all other columns
+        (colour coded)
+
+        **Extra parameters: **
+        
+        * `win` (float,float) -  plotting time window (default -0.6,0.8)
+        * `n_traces` (int) - number of traces to plot (default 300)
+        * `n_splits` (int) - number of time frames the dataset is divided
+                             into (default 4)
+        """
+
+        colors = ['r', 'b', 'g', 'y', 'c', 'm', 'k']
 
         sp_win = map(float, win.split(','))
         n_traces = int(n_traces)
@@ -62,13 +75,27 @@ class Visualize:
             sp_waves = spike_sort.extract.extract_spikes(sp, spt_split, sp_win)
             print sp_waves['data'].shape
             for chan in xrange(n_chans):
-                ax = plt.subplot(n_chans, n_splits, chan*n_splits+split+1,
+                ax = plt.subplot(n_chans, n_splits+1, chan*(n_splits+1)+split+1,
                             frameon=False, sharey=axs[chan])
                 plt.plot(sp_waves['time'], sp_waves['data'][:,:,chan],
-                         'k', alpha=0.3)
+                         colors[split], alpha=0.3)
                 plt.xticks([])
                 plt.yticks([])
                 axs[chan] = ax
+                # subplots with means
+                plt.subplot(n_chans, n_splits+1,
+                            (chan+1)*(n_splits+1))
+                plt.plot(sp_waves['time'],
+                         sp_waves['data'][:,:,chan].mean(1),
+                         colors[split])
+
+        for chan in xrange(n_chans):
+            ax = plt.subplot(n_chans, n_splits+1, (chan+1)*(n_splits+1))
+            ax.set_frame_on(False)
+            #ax.set_ylim(axs[chan].get_ylim())
+            ax.set_xticks([])
+            ax.set_yticks([])
+
         plt.text(0.5, 0.05, 'time', ha='center', transform=fig.transFigure)
         plt.text(0.05, 0.5, 'channels', va='center',rotation=90, transform=fig.transFigure)
 
