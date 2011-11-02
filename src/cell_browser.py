@@ -28,7 +28,7 @@ class HelloMpl:
         item = 'img_'+method
         img_data = self.h5filter.get_cached_string(cellid, item)
         
-        if not img_data or nocache:
+        if not img_data or nocache or opts:
             getattr(self.visualize, method)(cellid, **opts)
             img_data = html_fig()
             self.h5filter.add_cached_string(cellid, item, img_data)
