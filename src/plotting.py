@@ -17,10 +17,25 @@ class Visualize:
         self.io_filter = io_filter
         self.root = root
         
-    def waveshapes(self, cell, sp_win=[-0.6, 0.8]):
+    def waveshapes(self, cell, win='-0.6,0.8', n_traces=300):
+        """Plot spike waveshapes on all contacts.
+
+        **Extra parameters:**
+
+        * `win` (float,float) -  plotting time window (default -0.6,0.8)
+        * `n_traces` (int) - number of traces to plot (default 300)
+        """
+
+        sp_win = map(float, win.split(','))
+        n_traces = int(n_traces)
         ds = cell[:-5]
         sp = self.io_filter.read_sp(ds)
         spt = self.io_filter.read_spt(cell)
+
+        n_spikes = len(spt['data'])
+        i = np.random.randint(0, n_spikes, n_traces)
+        spt['data'] = spt['data'][i]
+
         sp_waves = spike_sort.extract.extract_spikes(sp, spt, sp_win)
         spike_sort.ui.plotting.figure()
         spike_sort.ui.plotting.plot_spikes(sp_waves)
