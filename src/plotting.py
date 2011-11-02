@@ -249,7 +249,8 @@ class Visualize:
                                           fig.transFigure)
         plt.vlines(ev, 0, 1, color='r', transform=trans, clip_on=False)
     
-    def pattern_spike_waveforms(self, cell, contact=0, n_spikes=100):
+    def pattern_spike_waveforms(self, cell, contact=0, n_spikes=100,
+                                mean='False'):
         """Waveforms of spikes emitted in different spike patterns
         (shown in separate subplots) and spike windows (shown in
         different colors).
@@ -261,6 +262,7 @@ class Visualize:
         * `contact` (int) -- index of tetrode contact to use (default
         0),
         * `n_spikes` (int) -- number of spikes to plot (default 100)
+        * `mean` (bool) -- plot only means (default False)
         """
 
         def which_window(spt, stim, ev):
@@ -276,6 +278,7 @@ class Visualize:
             return bool
         
         contact = int(contact)
+        mean = str2bool(mean)
         win = [-1, 2]
         colors = ['r', 'b', 'g', 'y']
 
@@ -311,8 +314,13 @@ class Visualize:
                 waves_sh = sp_win_waves[:,idx[:n_spikes]]
                 window_lab = sp_window_lab[:, sp_cl==l][idx[:n_spikes]]
                 for w_l in np.unique(window_lab):
-                    plt.plot(sp_time, waves_sh[:,
-                                               window_lab==w_l],colors[w_l],lw=0.1)
+                    waves = waves_sh[:, window_lab==w_l]
+                    if mean:
+                        waves = waves.mean(1)
+                        lw = 1.
+                    else:
+                        lw = 0.1
+                    plt.plot(sp_time, waves,colors[w_l],lw=lw)
                 
             plt.xlabel(self._dec2binstr(l,3))
             plt.xticks([])
