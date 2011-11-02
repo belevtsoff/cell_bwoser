@@ -6,7 +6,6 @@ import spike_sort
 from spike_analysis import dashboard, basic 
 import numpy as np
 
-from spike_sort.core.extract import ZeroPhaseFilter
 from matplotlib.transforms import blended_transform_factory
 
 def str2bool(v):
@@ -155,7 +154,8 @@ class Visualize:
             ax=plt.subplot(n_patterns, 1, i+1, frameon=False,
                            sharex=ax)
             traces = sp_traces['data'][:,cl==c,0]
-            plt.plot(sp_traces['time'], traces[:,:n_traces], 'k-')
+            plt.plot(sp_traces['time'], traces[:,:n_traces], 'k-',
+                     alpha=0.2)
             plt.text(0.9, 0.8, self._dec2binstr(c, ndigits),
                      transform=ax.transAxes)
             plt.yticks([])
