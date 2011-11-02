@@ -157,6 +157,13 @@ class Visualize:
         n_patterns = len(np.unique(cl))
         ndigits = np.ceil(np.log2(cl.max()))
         ax=None
+        
+        # remove 'out of range' stimuli
+        T_max = (sp['data'].shape[1])*1./sp['FS']*1000.
+        b_idx = ((stim+win[0])>0) & ((stim+win[1])<T_max)
+        stim = stim[b_idx]
+        cl = cl[b_idx]
+        
         stim_dict = {'data':stim}
         sp_traces = spike_sort.extract.extract_spikes(sp,
                                                       stim_dict,
@@ -175,7 +182,7 @@ class Visualize:
                      transform=ax.transAxes)
             plt.yticks([])
             plt.setp(ax.xaxis.get_ticklabels(),visible=False)
-            print sp_traces['data'].shape
+        
         plt.xticks(ev)
         plt.setp(ax.xaxis.get_ticklabels(),visible=True)
         trans = blended_transform_factory(ax.transData,
