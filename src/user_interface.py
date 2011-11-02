@@ -30,7 +30,6 @@ class UserInterface:
         dataset = dashboard.read_dataset(self.io_filter, cellid)
         spt = dataset['spt']
         stim = dataset['stim']
-        
         psth, time = basic.CalcPSTH(spt, stim)
 
         data = [{'x': x, 'y': y} for x, y in zip(time, psth)]
