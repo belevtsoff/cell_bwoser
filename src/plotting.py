@@ -200,6 +200,7 @@ class Visualize:
         """
         
         contact = int(contact)
+        n_traces = int(n_traces)
         subtract_mean = str2bool(subtract_mean)
         
         dataset, cl = self._get_patterns(cell)
