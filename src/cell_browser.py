@@ -108,8 +108,9 @@ class HelloMpl:
 from user_interface import UserInterface
 data_filter = BakerlabFilter(DATAPATH+'gollum_export.inf')
 
+abspath = os.path.abspath(os.curdir)
 conf = {'/js': {'tools.staticdir.on': True,
-        'tools.staticdir.dir': '/Users/bartosz/SVN/personal/Analysis/cell_bwoser/src/js'}}
+        'tools.staticdir.dir': abspath+'/js'}}
 
 env = Environment(loader=FileSystemLoader('templates'))
 
