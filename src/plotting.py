@@ -1,12 +1,14 @@
 import matplotlib.pyplot as plt
 import StringIO
 import urllib, base64
+import re,os
 
 import spike_sort
 from spike_analysis import dashboard, basic 
 import numpy as np
 
 from matplotlib.transforms import blended_transform_factory
+from matplotlib.ticker import AutoMinorLocator
 
 def str2bool(v):
   return v.lower() in ("yes", "true", "t", "1")
@@ -324,6 +326,89 @@ class Visualize:
                     plt.xticks([])
                     plt.yticks([])
                     plt.xlabel(self._dec2binstr(l,3))
+
+
+    def evoked_response(self, cell, chan='S1_AM', ref=None,
+                        win='0,30'):
+
+        """Evoked response averaged over all trials of specified
+        recording channel (macroelelctrodes).
+
+        Requires definition of analog signals in dataset description 
+        files (.inf).
+
+        **Extra parameters**:
+
+        * `chan` (int or str) -- channel index or channel name (default
+        S1_AM),
+        * `ref` (int or str) -- reference channel for bipolar
+          recording (if not given, unipolar data are plotted)
+        * `win` ("float,float") -- plotting window (default 0,30) 
+
+        """
+
+        def read_chan(cell):
+            conf_dict = self.io_filter.conf_dict
+
+            regexp="^/(?P<subject>[a-zA-z]+)/s(?P<ses_id>.+)/(?P<chan_name>.+)$"
+            m = re.match(regexp, cell)
+            rec_dict = m.groupdict()
+            chan = rec_dict['chan_name']
+            try:
+                rec_dict['chan_id']=int(chan)
+            except ValueError:
+                rec_dict['chan_id']=conf_dict['signals']['channels'][str(chan)] 
+
+            file_path = conf_dict['signals']['path']
+            
+            dirname = conf_dict['dirname'].format(**os.environ)
+            full_path = os.path.join(dirname, file_path)
+            fname = full_path.format(**rec_dict)
+
+            data = np.fromfile(fname, dtype=np.int16)
+            return {'data': data, "Fs": conf_dict['signals']['FS']}
+
+        def extract_trials(data_dict,stim,win):
+            data = data_dict['data']
+            Fs = data_dict['Fs']
+            stim = (stim/1000.*Fs).astype(int)
+            first = int(win[0]*Fs/1000.0)
+            last = int(win[1]*Fs/1000.0)
+            npts = last-first
+            stim = stim[(stim+first >= 0) & (stim+last <len(data))].astype(int)
+            ntrials = len(stim)-1
+  
+            trials = np.empty((npts,ntrials),dtype=np.float32)
+            for i,T in enumerate(stim[:-1]):
+                trials[:,i]=data[T+first:T+last]
+           
+            time = np.arange(first, last)*1000.0/Fs
+            return time, trials
+
+        win = map(float, win.split(','))
+        stim_path = "/".join(cell.split('/')[:-1]+['stim'])
+        stim = self.io_filter.read_spt(stim_path)['data']
+        chan_path =  "/".join(cell.split('/')[:-2]+[chan])
+        chan = read_chan(chan_path)
+
+        if ref:
+            ref_path =  "/".join(cell.split('/')[:-2]+[ref])
+            chan2 = read_chan(ref_path)
+            chan['data']-=chan2['data']
+
+        time, trials = extract_trials(chan, stim, win)
+        evoked_resp = trials.mean(1)
+        ax = plt.subplot(111)
+        plt.plot(time, evoked_resp)
+        plt.xlabel('time (ms)')
+        plt.xlim(win)
+        plt.ylabel('potential (a.u.)') 
+        minorLocator   = AutoMinorLocator()
+        ax.xaxis.set_minor_locator(minorLocator)
+        
+
+
+
 
 
 def html_fig(fig=None):

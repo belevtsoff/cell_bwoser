@@ -61,7 +61,8 @@ class HelloMpl:
                      'timeline',
                      'spike_patterns',
                      'pattern_traces', 
-                     'pattern_spike_waveforms']
+                     'pattern_spike_waveforms',
+                     'evoked_response']
         #methods = list(set(visualize) & set(dir(self.visualize)))
         methods = [vis for vis in visualize if vis in dir(self.visualize)]
         analyses = ["event_selector"] 
