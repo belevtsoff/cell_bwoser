@@ -9,7 +9,13 @@ import basic
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from io_tools import read_dataset
+
+def read_dataset(filter, dataset):
+    spt = filter.read_spt(dataset)
+    stim_node = "/".join(dataset.split('/')[:-1]+['stim'])
+    stim = filter.read_spt(stim_node)
+
+    return {'spt':spt['data'], 'stim': stim['data'], 'ev':None} 
 
 def plot_psth(ax, dataset, **kwargs):
     spt = dataset['spt']
@@ -18,8 +24,8 @@ def plot_psth(ax, dataset, **kwargs):
 
     basic.plotPSTH(spt, stim,ax=ax, **kwargs)
     ymin, ymax = plt.ylim()
-    if len(ev)>0:
-        plt.vlines(ev, ymin, ymax)
+    if ev is not None:
+        plt.vlines(ev, ymin, ymax, lw=0.5)
     
     ax.text(0.95, 0.9,"total n/o spikes: %d" % (len(spt),),
             transform=ax.transAxes,
@@ -53,7 +59,7 @@ def plot_trains(ax, dataset, **kwargs):
     basic.plotraster(spt, stim,ax=ax, **kwargs)
     ymin, ymax = plt.ylim()
     if len(ev)>0:
-        plt.vlines(ev, ymin, ymax)
+        plt.vlines(ev, ymin, ymax, lw=0.5)
 
 def plot_nspikes(ax, dataset, win=[0,30], color="k"):
     spt = dataset['spt']
@@ -91,7 +97,10 @@ def plot_dataset(dataset, fig=None, **kwargs):
     plot_nspikes(ax4, dataset, **kwargs)
     plt.title("burst order")
 
-def show_cell(filter, cell):
+def show_cell(filter, cell, n_trials=None, events=None):
 
     dataset = read_dataset(filter, cell)
+    if n_trials:
+        dataset['stim'] = dataset['stim'][:n_trials]
+    dataset['ev']=events
     plot_dataset(dataset)

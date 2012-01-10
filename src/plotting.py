@@ -103,8 +103,19 @@ class Visualize:
 
         self.io_filter.close()
 
-    def dashboard(self, cell):
-        dashboard.show_cell(self.io_filter, cell)
+    def dashboard(self, cell, n_trials=None):
+        """Show cell dashboard:
+
+        ** Extra parameters **:
+      
+        * n_trials (int) -- number of trials (stimuli) to plot (default all)
+        """
+        if n_trials:
+            n_trials = int(n_trials)
+        ev = np.sort(self.root.h5filter.get_cached_string(cell,
+                                                            "events"))
+        dashboard.show_cell(self.io_filter, cell, n_trials=n_trials,
+                            events=ev)
 
 
     def _get_patterns(self, cell):

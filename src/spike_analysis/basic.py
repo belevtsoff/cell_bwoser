@@ -42,7 +42,7 @@ def plotraster(spt,stim,win=[0,30],ntrials=None,ax=None,height=1.):
     i = np.searchsorted(stim[:ntrials],spt2);
     spt2 = (spt2-stim[i-1]);
   
-    plt.vlines(spt2,i,i+height)
+    plt.vlines(spt2,i,i+height,lw=1.5)
     plt.xlim(win)
     plt.ylim((1,ntrials))
     plt.xlabel('time (ms)')
