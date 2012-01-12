@@ -112,8 +112,12 @@ class Visualize:
         """
         if n_trials:
             n_trials = int(n_trials)
-        ev = np.sort(self.root.h5filter.get_cached_string(cell,
-                                                            "events"))
+        ev = self.root.h5filter.get_cached_string(cell, "events")
+
+        if ev is not None:
+            ev = np.asarray(ev)
+
+        plt.clf()
         dashboard.show_cell(self.io_filter, cell, n_trials=n_trials,
                             events=ev)
 
@@ -291,7 +295,7 @@ class Visualize:
         
         contact = int(contact)
         win = [-1, 2]
-        colors = ['r', 'b', 'g', 'y']
+        colors = ['r', 'b', 'g', 'y', 'c', 'm', 'k']
 
         dataset, cl = self._get_patterns(cell)
         spt = dataset['spt']

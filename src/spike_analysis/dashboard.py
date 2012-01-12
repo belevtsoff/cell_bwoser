@@ -25,7 +25,8 @@ def plot_psth(ax, dataset, **kwargs):
     basic.plotPSTH(spt, stim,ax=ax, **kwargs)
     ymin, ymax = plt.ylim()
     if ev is not None:
-        plt.vlines(ev, ymin, ymax, lw=0.5)
+        if len(ev)>0:
+            plt.vlines(ev, ymin, ymax, lw=0.5)
     
     ax.text(0.95, 0.9,"total n/o spikes: %d" % (len(spt),),
             transform=ax.transAxes,
@@ -58,8 +59,9 @@ def plot_trains(ax, dataset, **kwargs):
     
     basic.plotraster(spt, stim,ax=ax, **kwargs)
     ymin, ymax = plt.ylim()
-    if len(ev)>0:
-        plt.vlines(ev, ymin, ymax, lw=0.5)
+    if ev is not None:
+        if len(ev)>0:
+            plt.vlines(ev, ymin, ymax, lw=0.5)
 
 def plot_nspikes(ax, dataset, win=[0,30], color="k"):
     spt = dataset['spt']
