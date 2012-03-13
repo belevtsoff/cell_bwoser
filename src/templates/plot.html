@@ -22,21 +22,43 @@
     <h3>Description</h3>
     {{ doc }}
     </p>
-        
+    
     <hr>
         <b> {{ message|default("") }} </b>
         <form name="eval" action="plot?method={{ method }}&cellid={{ cellid }}" method="post">
             <p>
-               Reviewer:<input type="text" name="reviewer" value="" size="15" maxlength="40"/>
+            Score: 
+            <select name="score" id='score'>
+                <option value="NaN">None</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
             </p>
-            <input type="checkbox" name="clean">Clean</input>
-            <p>Comment</p>
-            <textarea name="comment"></textarea>
-            <p><input type="button" value="Save" onclick=
-                "if(eval.reviewer.value.length==0)
-                    alert('Enter your name!');
-                else eval.submit();"/></p>
+            <p><input type="button" value="Save" onclick="post()"/></p>
         </form>
+        <script type="text/javascript">
+
+        function post() {
+            score = $('#score').val()
+            post_data = {
+                        "cellid": "{{ cellid }}",
+                        "name" : "score",
+                        "data": score 
+                    }
+            $.post("/cache_data", post_data)
+
+        }
+        
+        data_request = {"cellid": "{{ cellid }}", "name": "score"}
+
+        $.get("/get_cached", data_request, function(d)
+                {$('#score').val(d.score[0])}, "json")
+
+
+        </script>
     </p>
 {% endblock %}
 

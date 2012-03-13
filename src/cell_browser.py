@@ -15,6 +15,16 @@ import numpy as np
 
 from utils import doc2html
 
+def append_column(data, type):
+    dtype = data.dtype.descr
+    dtype.append(('score', np.int8))
+    new_data = np.empty(data.shape, dtype=dtype)
+
+    for name, type in data.dtype.descr:
+        new_data[name] = data[name]
+    return new_data
+
+
 class HelloMpl:
     def __init__(self, env, data_filter):
 
@@ -23,7 +33,18 @@ class HelloMpl:
         self.h5filter = HDF5filter('cell_db.h5')
         
         self.data = mlab.csv2rec(DATAPATH+'cell_db.csv')
-    
+        self.data = append_column(self.data, ('score', np.int8))
+   
+    def update_score(self):
+
+        for i in range(len(self.data)):
+            cell_id = self.data['id'][i]
+            score = self.h5filter.get_cached_string(cell_id, 'score')
+            if score:
+                self.data['score'][i] = int(score[0])
+            else:
+                self.data['score'][i] = 0 
+
     def get_img_data(self, cellid, method, nocache=None, **opts):
         item = 'img_'+method
         img_data = self.h5filter.get_cached_string(cellid, item)
@@ -52,6 +73,7 @@ class HelloMpl:
     
     @cherrypy.expose
     def index(self):
+        self.update_score()
         return self.env.get_template('list.html').render(data=self.data)
     
     @cherrypy.expose
