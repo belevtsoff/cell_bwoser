@@ -108,7 +108,6 @@ class HelloMpl:
         
 from user_interface import UserInterface
 data_filter = BakerlabFilter(DATAPATH+'gollum_export.inf')
-
 abspath = os.path.abspath(os.curdir)
 conf = {'/js': {'tools.staticdir.on': True,
         'tools.staticdir.dir': abspath+'/js'}}
