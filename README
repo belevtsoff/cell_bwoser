@@ -1,0 +1,3 @@
+additional dependencies(apart from SpikeSort, matplotlib etc):
+- cherrypy
+- jinja2

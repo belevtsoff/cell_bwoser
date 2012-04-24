@@ -32,7 +32,7 @@ class UserInterface:
         stim = dataset['stim']
         psth, time = basic.CalcPSTH(spt, stim)
 
-        data = [{'x': x, 'y': y} for x, y in zip(time, psth)]
+        data = [{'x': x, 'y': int(y)} for x, y in zip(time, psth)]
         template = self.env.get_template('event_selector.html')
        
         doc = doc2html(self.__doc__)
