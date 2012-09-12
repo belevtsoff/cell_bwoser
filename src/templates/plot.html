@@ -17,7 +17,7 @@
     <form name="update" action="plot?method={{ method }}&cellid={{ cellid }}" method="post">
         <input type="submit" name='nocache' value="Update plot" />
     </form>
-    <img src="{{ img_data }}" />
+    <img id='image' src="{{ img_data }}" />
     <p>
     <h3>Description</h3>
     {{ doc }}
@@ -54,8 +54,15 @@
         
         data_request = {"cellid": "{{ cellid }}", "name": "score"}
 
-        $.get("/get_cached", data_request, function(d)
-                {$('#score').val(d.score[0])}, "json")
+        $.get("/get_cached", data_request, function(d) {$('#score').val(d.score[0])}, "json")
+
+        data_request = {"cellid": "{{ cellid }}", "method": "{{ method }}", "opts" : {{ opts }} }
+        $.get("/img", data_request, function(d)
+        {   if (d.status == 'done')
+            {
+                $('#image').attr('src',d.data)
+            }
+        }, "json")
 
 
         </script>

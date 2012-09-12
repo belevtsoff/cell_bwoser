@@ -4,6 +4,7 @@ import urllib, base64
 import re,os
 
 import spike_sort
+from spike_sort.core import extract
 from spike_analysis import dashboard, basic 
 import numpy as np
 
@@ -15,9 +16,8 @@ def str2bool(v):
 
 
 class Visualize:
-    def __init__(self, io_filter, root):
+    def __init__(self, io_filter):
         self.io_filter = io_filter
-        self.root = root
         
     def waveshapes(self, cell, win='-0.6,0.8', n_traces=300):
         """Plot spike waveshapes on all contacts.
@@ -74,7 +74,7 @@ class Visualize:
         for split in xrange(n_splits):
             i = np.random.randint(inc*split, inc*(split+1), n_traces)
             spt_split = {'data': spt['data'][i]}
-            sp_waves = spike_sort.extract.extract_spikes(sp, spt_split, sp_win)
+            sp_waves = extract.extract_spikes(sp, spt_split, sp_win)
             print sp_waves['data'].shape
             for chan in xrange(n_chans):
                 ax = plt.subplot(n_chans, n_splits+1, chan*(n_splits+1)+split+1,
@@ -112,8 +112,9 @@ class Visualize:
         """
         if n_trials:
             n_trials = int(n_trials)
-        ev = self.root.h5filter.get_cached_string(cell, "events")
 
+        #ev = self.root.h5filter.get_cached_string(cell, "events")
+        ev = []
         if ev is not None:
             ev = np.asarray(ev)
 
@@ -140,8 +141,9 @@ class Visualize:
         dataset = dashboard.read_dataset(self.io_filter, cell)
         spt = dataset['spt']
         stim = dataset['stim']
-        ev = np.sort(self.root.h5filter.get_cached_string(cell,
-                                                          "events"))
+        #ev = np.sort(self.root.h5filter.get_cached_string(cell,
+        #                                                  "events"))
+        ev = None
         try:
             win = [ev[0], ev[-1]]
         except IndexError:
@@ -243,7 +245,7 @@ class Visualize:
         cl = cl[b_idx]
         
         stim_dict = {'data':stim}
-        sp_traces = spike_sort.extract.extract_spikes(sp,
+        sp_traces = extract.extract_spikes(sp,
                                                       stim_dict,
                                                       win,
                                                       contacts=contact)
@@ -303,7 +305,7 @@ class Visualize:
         ev = dataset['events']
         sp = self.io_filter.read_sp(cell)
         
-        sp_dict = spike_sort.extract.extract_spikes(sp,
+        sp_dict = extract.extract_spikes(sp,
                                                       {"data": spt},
                                                       win,
                                                       contacts=contact)
@@ -420,17 +422,12 @@ class Visualize:
         plt.ylabel('potential (a.u.)') 
         minorLocator   = AutoMinorLocator()
         ax.xaxis.set_minor_locator(minorLocator)
-        
 
 
+    def html_fig(self):
 
-
-
-def html_fig(fig=None):
-    if not fig:
-        fig = plt.gcf()
-    imgdata = StringIO.StringIO()
-    plt.savefig(imgdata, format='png')
-    plt.close('all')
-    html_img =  "data:image/png;base64, " + urllib.quote(base64.b64encode(imgdata.getvalue()))
-    return html_img
+        imgdata = StringIO.StringIO()
+        plt.savefig(imgdata, format='png')
+        plt.close('all')
+        html_img =  "data:image/png;base64, " + urllib.quote(base64.b64encode(imgdata.getvalue()))
+        return html_img

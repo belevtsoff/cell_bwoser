@@ -1,12 +1,12 @@
 import cherrypy
 from jinja2 import FileSystemLoader, Environment
-from spike_sort.io.filters import BakerlabFilter
 
-from filters import HDF5filter
-from plotting import Visualize, html_fig
+from filters import HDF5filter, CloudFilter
+from plotting import Visualize
 from matplotlib import mlab
 
 import os
+import cloud
 
 DATAPATH = os.environ['DATAPATH']
 
@@ -14,6 +14,8 @@ import json
 import numpy as np
 
 from utils import doc2html
+
+#cloud.start_simulator()
 
 def append_column(data, type):
     dtype = data.dtype.descr
@@ -24,9 +26,15 @@ def append_column(data, type):
         new_data[name] = data[name]
     return new_data
 
+def picloud_task(method, cellid, kwargs):
+    visualize = Visualize(CloudFilter())
+    getattr(visualize, method)(cellid, **kwargs)
+    img_data = visualize.html_fig()
+    return img_data
+
 
 class HelloMpl:
-    def __init__(self, env, data_filter):
+    def __init__(self, env):
 
         self.env = env
         
@@ -34,6 +42,7 @@ class HelloMpl:
         
         self.data = mlab.csv2rec(DATAPATH+'cell_db.csv')
         self.data = append_column(self.data, ('score', np.int8))
+        self.running_tasks = {}
    
     def update_score(self):
 
@@ -45,16 +54,35 @@ class HelloMpl:
             else:
                 self.data['score'][i] = 0 
 
-    def get_img_data(self, cellid, method, nocache=None, **opts):
+    def get_img_data(self, cellid, method, opts, nocache=None):
+
+
         item = 'img_'+method
+
+
+        if (cellid, item) in self.running_tasks:
+            jid = self.running_tasks[(cellid, item)]
+            status = cloud.status(jid)
+            if status in ['processing', 'queued']:
+                return 'inprogress', None
+            elif status=='done':
+                img_data = cloud.result(status)
+                self.h5filter.add_cached_string(cellid, item, img_data)
+                del self.running_tasks[(cellid, item)]
+                return 'done', img_data
+            else:
+                del self.running_tasks[(cellid, item)]
+                import pdb; pdb.set_trace()
+                return 'error', None
+
         img_data = self.h5filter.get_cached_string(cellid, item)
         
         if not img_data or nocache or opts:
-            getattr(self.visualize, method)(cellid, **opts)
-            img_data = html_fig()
-            self.h5filter.add_cached_string(cellid, item, img_data)
-            
-        return img_data
+            jid = cloud.call(picloud_task, method, cellid, opts, _env='spikesort', _profile=True, _type='c2')
+            self.running_tasks[(cellid, item)] = jid
+            return 'inprogress', None
+
+        return 'done', img_data
     
     @cherrypy.expose
     def cache_data(self, cellid, name, data):
@@ -86,7 +114,7 @@ class HelloMpl:
                      'pattern_spike_waveforms',
                      'evoked_response']
         #methods = list(set(visualize) & set(dir(self.visualize)))
-        methods = [vis for vis in visualize if vis in dir(self.visualize)]
+        methods = [vis for vis in visualize]
         analyses = ["event_selector"] 
         return self.env.get_template('cell.html').render(cellid=cellid,
                                               methods=methods,
@@ -108,14 +136,22 @@ class HelloMpl:
             newid = self.data['id'][i[0]-1]
             cherrypy.lib.cptools.redirect("/cell?cellid=%s" % newid)
         return "No more cells"
-    
+
+    @cherrypy.expose
+    def img(self, cellid, method, opts=None):
+        if not opts:
+            opts = {}
+        else:
+            opts = json.loads(opts)
+
+        status, img_data = self.get_img_data(cellid, method, opts)
+        return json.dumps({'status': status, 'data': img_data})
+
     @cherrypy.expose
     def plot(self, method, cellid, nocache=None, clean=None,
              comment=None, reviewer=None, **kwargs):
 
-        img_data = self.get_img_data(cellid, method, nocache, **kwargs)
-
-        docstring = getattr(self.visualize, method).__doc__
+        docstring = getattr(Visualize, method).__doc__
         doc = doc2html(docstring)
          
         if reviewer: message = "You evaluation has been saved to the DB"
@@ -124,19 +160,18 @@ class HelloMpl:
         return self.env.get_template('plot.html').render(cellid=cellid,
                                                          doc=doc,
                                                          method=method,
-                                                         img_data=img_data,
                                                          message=message,
                                                          opts=kwargs)
         
 from user_interface import UserInterface
-data_filter = BakerlabFilter(DATAPATH+'gollum_export.inf')
+
 abspath = os.path.abspath(os.curdir)
 conf = {'/js': {'tools.staticdir.on': True,
         'tools.staticdir.dir': abspath+'/js'}}
 
 env = Environment(loader=FileSystemLoader('templates'))
 
-root = HelloMpl(env, data_filter)
-root.analyse = UserInterface(env, data_filter)
-root.visualize = Visualize(data_filter, root)
+root = HelloMpl(env)
+root.analyse = UserInterface(env, CloudFilter())
+
 cherrypy.quickstart(root, '/', config=conf)
