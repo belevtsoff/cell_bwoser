@@ -163,13 +163,21 @@ class HelloMpl:
                                                          message=message,
                                                          opts=kwargs)
         
+
+import auth
 from user_interface import UserInterface
 
 abspath = os.path.abspath(os.curdir)
-conf = {'/js': {'tools.staticdir.on': True,
-        'tools.staticdir.dir': abspath+'/js'},
-        '/static': {'tools.staticdir.on': True,
-                'tools.staticdir.dir': abspath+'/static'},
+conf = {'/': {'tools.basic_auth.on': True,
+              'tools.basic_auth.realm': 'CellBrowser',
+              'tools.basic_auth.users': auth.get_users(),
+              'tools.basic_auth.encrypt': auth.encrypt_pw},
+        '/js': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': abspath+'/js'},
+        '/static': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir': abspath+'/static'},
         }
 
 env = Environment(loader=FileSystemLoader('templates'))
