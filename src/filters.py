@@ -1,5 +1,6 @@
 import tables
 import cloud
+import numpy as np
 
 class HDF5filter:
     def __init__(self, h5fname):

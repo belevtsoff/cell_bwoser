@@ -119,8 +119,7 @@ class Visualize:
             ev = np.asarray(ev)
 
         plt.clf()
-        dashboard.show_cell(self.io_filter, cell, n_trials=n_trials,
-                            events=ev)
+        dashboard.show_cell(self.io_filter, cell)
 
 
     def _get_patterns(self, cell):

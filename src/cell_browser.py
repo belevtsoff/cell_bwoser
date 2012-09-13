@@ -66,13 +66,13 @@ class HelloMpl:
             if status in ['processing', 'queued']:
                 return 'inprogress', None
             elif status=='done':
-                img_data = cloud.result(status)
+                img_data = cloud.result(jid)
                 self.h5filter.add_cached_string(cellid, item, img_data)
                 del self.running_tasks[(cellid, item)]
                 return 'done', img_data
             else:
                 del self.running_tasks[(cellid, item)]
-                import pdb; pdb.set_trace()
+                #import pdb; pdb.set_trace()
                 return 'error', None
 
         img_data = self.h5filter.get_cached_string(cellid, item)
@@ -167,7 +167,10 @@ from user_interface import UserInterface
 
 abspath = os.path.abspath(os.curdir)
 conf = {'/js': {'tools.staticdir.on': True,
-        'tools.staticdir.dir': abspath+'/js'}}
+        'tools.staticdir.dir': abspath+'/js'},
+        '/static': {'tools.staticdir.on': True,
+                'tools.staticdir.dir': abspath+'/static'},
+        }
 
 env = Environment(loader=FileSystemLoader('templates'))
 

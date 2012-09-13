@@ -7,6 +7,7 @@
     <style type="text/css">
         .important { color: #000000; }
     </style>
+    <link rel="stylesheet" href="/static/spinners.css">
 {% endblock %}
 
 {% block content %}
@@ -17,7 +18,22 @@
     <form name="update" action="plot?method={{ method }}&cellid={{ cellid }}" method="post">
         <input type="submit" name='nocache' value="Update plot" />
     </form>
-    <img id='image' src="{{ img_data }}" />
+    <div id='placeholder'>
+        <img id='image' src="" />
+        <div class="spinner bar">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+
+    </div>
+
+
     <p>
     <h3>Description</h3>
     {{ doc }}
@@ -51,18 +67,37 @@
             $.post("/cache_data", post_data)
 
         }
-        
+
+        function request_image() {
+            data_request = {"cellid": "{{ cellid }}", "method": "{{ method }}", "opts" : {{ opts }} }
+
+            $.get("/img", data_request, function(d)
+            {
+                if (d.status == 'done')
+                {
+                    $('#image').attr('src',d.data)
+                    $('.spinner').css('display', 'none')
+                    clearInterval(intervalID)
+                }
+                else if (d.status=='error')
+                {
+                    $('#placeholder').html('Error occurred')
+                    $('.spinner').css('display', 'none')
+                    clearInterval(intervalID)
+                }
+            }
+
+                , "json");
+
+        }
+
         data_request = {"cellid": "{{ cellid }}", "name": "score"}
 
         $.get("/get_cached", data_request, function(d) {$('#score').val(d.score[0])}, "json")
 
-        data_request = {"cellid": "{{ cellid }}", "method": "{{ method }}", "opts" : {{ opts }} }
-        $.get("/img", data_request, function(d)
-        {   if (d.status == 'done')
-            {
-                $('#image').attr('src',d.data)
-            }
-        }, "json")
+        var intervalID = setInterval(request_image, 1000);
+
+
 
 
         </script>
