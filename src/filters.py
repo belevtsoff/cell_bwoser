@@ -33,7 +33,7 @@ class HDF5filter:
 class CloudFilter:
 
     def __init__(self):
-        pass
+        self.open_files =[]
 
     def read_spt(self,  dataset):
         """Returns spike times in miliseconds:
@@ -46,6 +46,19 @@ class CloudFilter:
         """
 
         cloud.files.get(dataset, 'cell.spt')
-
         spt = np.fromfile('cell.spt', dtype=np.int32)
+
         return {"data": spt / 200.0}
+
+    def read_sp(self, dataset):
+
+        cloud.files.get(dataset, 'cell.sp')
+        n_contacts = 4
+        FS = 25000
+        f_tables = tables.openFile('cell.sp')
+        sp = f_tables.getNode('/', 'test').read()
+        f_tables.close()
+
+        return {"data": sp, "FS": FS, "n_contacts": n_contacts}
+    def close(self):
+        pass

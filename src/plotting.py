@@ -30,7 +30,7 @@ class Visualize:
 
         sp_win = map(float, win.split(','))
         n_traces = int(n_traces)
-        ds = cell[:-5]
+        ds = cell[:-6]
         sp = self.io_filter.read_sp(ds)
         spt = self.io_filter.read_spt(cell)
 
@@ -62,7 +62,7 @@ class Visualize:
         sp_win = map(float, win.split(','))
         n_traces = int(n_traces)
         n_splits = int(n_splits)
-        sp = self.io_filter.read_sp(cell)
+        sp = self.io_filter.read_sp('/'.join(cell.split('/')[:-1]))
         spt = self.io_filter.read_spt(cell)
         
         n_spikes = len(spt['data'])
