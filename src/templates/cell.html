@@ -11,6 +11,9 @@
 
 {% block content %}
     <h1>Visualization - {{ cellid }}</h1>
+    <p><b>Comment: </b> {{ comment }}
+        <br>
+    <b>Score: </b> {{ score }} </p>
     <p class="important">
         <ul>
         {% for method in methods %}

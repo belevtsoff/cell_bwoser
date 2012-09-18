@@ -87,9 +87,20 @@ class HelloMpl:
                      'evoked_response']
         #methods = list(set(visualize) & set(dir(self.visualize)))
         methods = [vis for vis in visualize if vis in dir(self.visualize)]
-        analyses = ["event_selector"] 
+        analyses = ["event_selector"]
+        i, = np.where(self.data['id']==cellid)
+        comment = self.data['comment'][i[0]]
+
+        score = self.h5filter.get_cached_string(cellid, 'score')
+
+        try:
+            score = np.array(score)[0]
+        except IndexError:
+            score = "undefined"
         return self.env.get_template('cell.html').render(cellid=cellid,
                                               methods=methods,
+                                              score=score,
+                                              comment=comment,
                                               analyse_methods=analyses)
    
     @cherrypy.expose
