@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import StringIO
 import urllib, base64
@@ -121,6 +123,12 @@ class Visualize:
         dashboard.show_cell(self.io_filter, cell, n_trials=n_trials,
                             events=ev)
 
+    def _get_events(self, cell):
+        ev = self.root.h5filter.get_cached_string(cell, "events")
+        if ev is not None:
+            ev = np.asarray(ev)
+        return ev
+        
 
     def _get_patterns(self, cell):
         
@@ -168,7 +176,7 @@ class Visualize:
             bStr=bStr+ str(n % 2)
             n = n >> 1
         if digits:
-            bStr=bStr.ljust(digits,'0')
+            bStr=bStr.ljust(int(digits),'0')
         return bStr
     
     def spike_patterns(self, cell):
@@ -178,6 +186,7 @@ class Visualize:
         """
         
         dataset, cl = self._get_patterns(cell)
+        ev = self._get_events(cell)
         spt = dataset['spt']
         stim = dataset['stim']
         
@@ -189,19 +198,21 @@ class Visualize:
         bins = bins[:-1]
         w = 0.8
         plt.bar(bins, n, width=w, fc='none')
-        ndigits = np.ceil(np.log2(cl.max()))
+        ndigits = int(np.ceil(np.log2(cl.max())))
         labels = map(lambda x: self._dec2binstr(x, ndigits), bins)
         plt.xticks(bins+w/2, labels)
         plt.xlabel('spike patterns')
         plt.ylabel('frequency')
 
-        plt.subplot(212)
+        ax=plt.subplot(212)
         for i in np.unique(cl):
             basic.plotPSTH(spt, stim[cl==i], rate=True, 
                            label=self._dec2binstr(i, ndigits))
-        plt.legend()
+        trans = blended_transform_factory(ax.transData, ax.transAxes)
+        plt.vlines(ev, 0, 1, transform=trans)
+        plt.legend(prop=dict(size=8))
 
-    def pattern_traces(self, cell, contact=1, n_traces=100, subtract_mean='True'):
+    def pattern_traces(self, cell, contact=0, n_traces=100, subtract_mean='True'):
         """Show raw traces from microelectrodes for different spike
         patterns.
         
