@@ -1,4 +1,4 @@
-DATAPATH='/Volumes/PortableData/Data/dmytro/'
+DATAPATH='/Volumes/Time Machine Backups/Data/dmytro/'
 INSTALLDIR=../../MultiCellPatterns/data
 
 DBFILE=../src/cell_db.h5
