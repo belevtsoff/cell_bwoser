@@ -35,7 +35,7 @@ class HelloMpl:
         self.data = mlab.csv2rec(DATAPATH+'cell_db.csv')
         self.data = append_column(self.data, ('score', np.int8))
    
-    def update_score(self):
+    def update_data(self):
 
         for i in range(len(self.data)):
             cell_id = self.data['id'][i]
@@ -43,7 +43,13 @@ class HelloMpl:
             if score:
                 self.data['score'][i] = int(score[0])
             else:
-                self.data['score'][i] = 0 
+                self.data['score'][i] = 0
+            comment = self.h5filter.get_cached_string(cell_id, 'comment') 
+            if comment:
+                self.data['comment'][i] = comment
+            else:
+                comment = str(self.data['comment'][i])
+                self.h5filter.add_cached_string(cell_id, 'comment', comment)         
 
     def get_img_data(self, cellid, method, nocache=None, **opts):
         item = 'img_'+method
@@ -58,7 +64,10 @@ class HelloMpl:
     
     @cherrypy.expose
     def cache_data(self, cellid, name, data):
-        data = map(float, data.split(","))
+        try:
+            data = map(float, data.split(","))
+        except ValueError:
+            data = str(data)
         self.h5filter.add_cached_string(str(cellid), str(name), data)
         return 
 
@@ -73,7 +82,7 @@ class HelloMpl:
     
     @cherrypy.expose
     def index(self):
-        self.update_score()
+        self.update_data()
         return self.env.get_template('list.html').render(data=self.data)
     
     @cherrypy.expose
@@ -89,8 +98,8 @@ class HelloMpl:
         methods = [vis for vis in visualize if vis in dir(self.visualize)]
         analyses = ["event_selector"]
         i, = np.where(self.data['id']==cellid)
-        comment = self.data['comment'][i[0]]
-
+        comment = self.h5filter.get_cached_string(cellid, 'comment')
+            
         score = self.h5filter.get_cached_string(cellid, 'score')
 
         try:
