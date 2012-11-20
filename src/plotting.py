@@ -278,7 +278,7 @@ class Visualize:
                                           fig.transFigure)
         plt.vlines(ev, 0, 1, color='r', transform=trans, clip_on=False)
     
-    def pattern_spike_waveforms(self, cell, contact=0, n_spikes=100):
+    def pattern_spike_waveforms(self, cell, contact=0, n_spikes=100, win="-1,2"):
         """Waveforms of spikes emitted in different spike patterns
         (shown in separate subplots) and spike windows (shown in
         different colors).
@@ -301,11 +301,11 @@ class Visualize:
         def spike_in_win(spt, stim, win):
             i = np.searchsorted(stim, spt)-1
             sp_pst = spt-stim[i]
-            bool = ((sp_pst>win[0]) &( sp_pst<win[1]))
-            return bool
+            win_bool = ((sp_pst>win[0]) &( sp_pst<win[1]))
+            return win_bool
         
         contact = int(contact)
-        win = [-1, 2]
+        win = map(float, win.split(','))
         colors = ['r', 'b', 'g', 'y', 'c', 'm', 'k']
 
         dataset, cl = self._get_patterns(cell)
@@ -322,23 +322,22 @@ class Visualize:
         sp_waves = sp_dict['data'][:,:, 0]
         #spt = spt[:sp_waves.shape[1]]
         stim_idx = stim.searchsorted(spt)-1
+        #copy pattern label to each spike in a pattern
         sp_cl = cl[stim_idx]
+        #index of event to which a spike belongs
         sp_window_lab = which_window(spt, stim, ev)
         labels = np.unique(cl)
         labels = labels[labels>0]
-        axes_list = []
-        i_max = np.abs(sp_time).argmin()
         fig = plt.figure(figsize=(12,5))
         fig.subplots_adjust(left=0.05, right=0.95, bottom=0.15)
         ax=None
-        min, max = sp_waves[i_max,:].min(),sp_waves[i_max,:].max()
-        x = np.linspace(min, max, 100)
+
         for i,l in enumerate(labels):
             sp_win_waves = sp_waves[:, sp_cl==l]
             if sp_win_waves.shape[1]>0:
                 idx = np.random.rand(sp_win_waves.shape[1]).argsort()
                 waves_sh = sp_win_waves[:,idx[:n_spikes]]
-                window_lab = sp_window_lab[:, sp_cl==l][idx[:n_spikes]]
+                window_lab = sp_window_lab[sp_cl==l][idx[:n_spikes]]
                 ax = plt.subplot(2, len(labels), i+1, frameon=False, sharey=ax)
                 for w_l in np.unique(window_lab):
                     waves = waves_sh[:, window_lab==w_l]
